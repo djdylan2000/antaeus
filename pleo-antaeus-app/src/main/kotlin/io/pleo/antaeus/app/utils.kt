@@ -1,11 +1,14 @@
 
 import io.pleo.antaeus.core.external.PaymentProvider
+import io.pleo.antaeus.core.services.AbstractQueueWorker
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.Currency
 import io.pleo.antaeus.models.Invoice
 import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.models.Money
 import java.math.BigDecimal
+import java.util.concurrent.*
+import kotlin.math.abs
 import kotlin.random.Random
 
 // This will create all schemas and setup initial data
@@ -35,6 +38,32 @@ internal fun getPaymentProvider(): PaymentProvider {
     return object : PaymentProvider {
         override fun charge(invoice: Invoice): Boolean {
                 return Random.nextBoolean()
+        }
+    }
+}
+
+// mock Queue Worker to examine behavior
+internal fun getQueueWorker(): AbstractQueueWorker<String> {
+    val executor = ThreadPoolExecutor(10, 10, 30, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>(), Executors.defaultThreadFactory())
+    return object: AbstractQueueWorker<String>(4, 5, executor) {
+
+        override fun poll(): String? {
+            return listOf("1", "2", "3", "4", "5", null).get(abs(Random.nextInt()) % 6)
+        }
+
+        override fun markDone(message: String) {
+            println("processing message done " + message)
+        }
+
+        override fun process(message: String): Boolean {
+            println("processing message " + message)
+
+            // simulate processing
+            Thread.sleep(500L + Random.nextInt(0, 300))
+            return Random.nextBoolean()
+        }
+        override fun markFailed(message: String) {
+            println("processing message failed " + message)
         }
     }
 }

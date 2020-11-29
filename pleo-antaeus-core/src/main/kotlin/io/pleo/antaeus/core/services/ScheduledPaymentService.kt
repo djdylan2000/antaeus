@@ -2,6 +2,9 @@ package io.pleo.antaeus.core.services
 
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.models.ScheduledPayment
+import io.pleo.antaeus.models.status
+import java.util.*
+import kotlin.collections.ArrayList
 
 class ScheduledPaymentService(private val dal: AntaeusDal) {
 
@@ -10,11 +13,13 @@ class ScheduledPaymentService(private val dal: AntaeusDal) {
     }
 
     fun nextPending(): ScheduledPayment {
-        return dal.pollNextScheduledPayment();
+        return ScheduledPayment(1, 1, Date(),0, status.SCHEDULED, Date())
+//        return dal.pollNextScheduledPayment();
     }
 
     fun done(scheduledPaymentId: Int) {
-        return dal.markScheduledPaymentSuccess(scheduledPaymentId);
+
+//        return dal.markScheduledPaymentSuccess(scheduledPaymentId);
     }
 
 }

@@ -8,6 +8,7 @@
 package io.pleo.antaeus.app
 
 import getPaymentProvider
+import getQueueWorker
 import io.pleo.antaeus.core.services.BillingService
 import io.pleo.antaeus.core.services.CustomerService
 import io.pleo.antaeus.core.services.InvoiceService
@@ -62,6 +63,9 @@ fun main() {
 
     // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(paymentProvider = paymentProvider)
+
+    val qw = getQueueWorker()
+    qw.start()
 
     // Create REST web service
     AntaeusRest(
