@@ -7,11 +7,11 @@ data class ScheduledPayment(
         val invoiceId: Int,
         val scheduledTime: Date,
         var attempt: Int = 0,
-        var status: status,
+        var status: ScheduledPaymentStatus,
         var lastStartedAt: Date
 )
 
-enum class status {
+enum class ScheduledPaymentStatus {
     SCHEDULED,
     SUCCESS,
     FAILURE
