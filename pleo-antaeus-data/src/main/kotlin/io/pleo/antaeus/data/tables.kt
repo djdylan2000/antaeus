@@ -5,10 +5,7 @@
 
 package io.pleo.antaeus.data
 
-import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
-import org.joda.time.DateTime
-import java.util.*
 
 object InvoiceTable : Table() {
     val id = integer("id").autoIncrement().primaryKey()

@@ -6,9 +6,7 @@
 package io.pleo.antaeus.data
 
 import io.pleo.antaeus.models.*
-import io.pleo.antaeus.models.Currency
 import org.jetbrains.exposed.sql.ResultRow
-import java.util.*
 
 fun ResultRow.toInvoice(): Invoice = Invoice(
         id = this[InvoiceTable.id],

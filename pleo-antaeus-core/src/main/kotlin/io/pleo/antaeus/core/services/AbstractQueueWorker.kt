@@ -1,8 +1,6 @@
 package io.pleo.antaeus.core.services
 
-import java.lang.Exception
 import java.util.concurrent.Executor
-import java.util.concurrent.ExecutorService
 
 abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTimeSecs: Int, val executor: Executor) {
 
@@ -12,9 +10,7 @@ abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTi
 
     abstract fun markFailed(message: MESSAGE)
 
-
     abstract fun poll(): MESSAGE?
-
 
     fun start() {
 
@@ -47,7 +43,7 @@ abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTi
                 } catch (e : Exception) {
                     markFailed(message)
                 }
-
+                Thread.sleep(500)
             }
         }
     }

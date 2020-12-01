@@ -10,13 +10,15 @@ package io.pleo.antaeus.data
 import io.pleo.antaeus.models.*
 import io.pleo.antaeus.models.Currency
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.less
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
-import java.util.*
 import java.util.Date
 
 class AntaeusDal(private val db: Database) {
+
+    val MAX_RETRY_ATTEMPTS = 5
+    val TIMEOUT_MINS = 5
+
     fun fetchInvoice(id: Int): Invoice? {
         // transaction(db) runs the internal query as a new database transaction.
         return transaction(db) {
@@ -79,7 +81,7 @@ class AntaeusDal(private val db: Database) {
         return fetchCustomer(id)
     }
 
-    fun fetchScheduledPayment(id: Int): ScheduledPayment? {
+    private fun fetchScheduledPayment(id: Int): ScheduledPayment? {
         return transaction(db) {
             ScheduledPaymentTable
                     .select { ScheduledPaymentTable.id.eq(id) }
@@ -105,27 +107,54 @@ class AntaeusDal(private val db: Database) {
     fun pollNextScheduledPayment(): ScheduledPayment? {
 
         val id: Int = transaction(db) transaction@{
-            addLogger(StdOutSqlLogger)
 
             val next = ScheduledPaymentTable
                     .selectAll()
                     .forUpdate()
                     .andWhere { (ScheduledPaymentTable.scheduledTime.less(CurrentDateTime()) and (ScheduledPaymentTable.status neq ScheduledPaymentStatus.SUCCESS.toString())) }
-                    .andWhere { ScheduledPaymentTable.lastStartedAt.isNull() or (ScheduledPaymentTable.attempt less 5 and (ScheduledPaymentTable.lastStartedAt.less(DateTime().minusMinutes(5))))}
+                    .andWhere { ScheduledPaymentTable.lastStartedAt.isNull() or (ScheduledPaymentTable.attempt less MAX_RETRY_ATTEMPTS and (ScheduledPaymentTable.lastStartedAt.less(DateTime().minusMinutes(TIMEOUT_MINS))))}
                     .firstOrNull()
                     ?.toScheduledPayment()
                     ?: return@transaction null
 
             ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(next.id) }) {
                 with(SqlExpressionBuilder) {
-                    it.update(ScheduledPaymentTable.attempt, ScheduledPaymentTable.attempt + 1)
-                    it.set(ScheduledPaymentTable.lastStartedAt, DateTime())
+                    it.update(attempt, attempt + 1)
+                    it[lastStartedAt] = DateTime()
                 }
             }
         }
                 ?: return null
 
         return fetchScheduledPayment(id)
-
     }
+
+    fun markScheduledPaymentSuccess(id: Int) {
+
+        transaction {
+
+            // updating scheduled payment status and invoice status should be atomic
+
+            ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(id) }) {
+                    it[status] = ScheduledPaymentStatus.SUCCESS.toString()
+            }
+
+            InvoiceTable.update({InvoiceTable.id.eq(fetchScheduledPayment(id)!!.invoiceId)})
+            {
+                it[status] = InvoiceStatus.PAID.toString()
+            }
+        }
+    }
+
+    fun markScheduledFailed(id: Int) {
+
+        transaction {
+
+            ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(id) }) {
+                it[status] = ScheduledPaymentStatus.FAILURE.toString()
+            }
+
+        }
+    }
+
 }
