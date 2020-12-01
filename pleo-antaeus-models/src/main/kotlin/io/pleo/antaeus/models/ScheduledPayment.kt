@@ -8,7 +8,7 @@ data class ScheduledPayment(
         val scheduledTime: Date,
         var attempt: Int = 0,
         var status: ScheduledPaymentStatus,
-        var lastStartedAt: Date
+        var lastStartedAt: Date?
 )
 
 enum class ScheduledPaymentStatus {

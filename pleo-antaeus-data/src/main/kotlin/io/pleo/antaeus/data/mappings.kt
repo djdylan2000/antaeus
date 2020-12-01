@@ -30,6 +30,6 @@ fun ResultRow.toScheduledPayment(): ScheduledPayment = ScheduledPayment(
         invoiceId = this[ScheduledPaymentTable.invoiceId],
         scheduledTime = this[ScheduledPaymentTable.scheduledTime].toDate(),
         attempt = this[ScheduledPaymentTable.attempt],
-        lastStartedAt = this[ScheduledPaymentTable.lastStartedAt].toDate(),
+        lastStartedAt = this[ScheduledPaymentTable.lastStartedAt]?.toDate(),
         status = ScheduledPaymentStatus.valueOf(this[ScheduledPaymentTable.status])
 )

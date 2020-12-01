@@ -5,7 +5,10 @@
 
 package io.pleo.antaeus.data
 
+import org.jetbrains.exposed.sql.Column
 import org.jetbrains.exposed.sql.Table
+import org.joda.time.DateTime
+import java.util.*
 
 object InvoiceTable : Table() {
     val id = integer("id").autoIncrement().primaryKey()
@@ -26,5 +29,5 @@ object ScheduledPaymentTable: Table() {
     val scheduledTime = datetime("scheduled_time")
     val attempt = integer("attempt")
     val status = text("status")
-    val lastStartedAt = datetime("last_started_at")
+    val lastStartedAt = datetime("last_started_at").nullable()
 }

@@ -15,20 +15,19 @@ import io.pleo.antaeus.core.services.InvoiceService
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
+import io.pleo.antaeus.data.ScheduledPaymentTable
 import io.pleo.antaeus.rest.AntaeusRest
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.SchemaUtils
-import org.jetbrains.exposed.sql.StdOutSqlLogger
-import org.jetbrains.exposed.sql.addLogger
+import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.TransactionManager
 import org.jetbrains.exposed.sql.transactions.transaction
+import org.joda.time.DateTime
 import setupInitialData
 import java.io.File
 import java.sql.Connection
 
 fun main() {
     // The tables to create in the database.
-    val tables = arrayOf(InvoiceTable, CustomerTable)
+    val tables = arrayOf(InvoiceTable, CustomerTable, ScheduledPaymentTable)
 
     val dbFile: File = File.createTempFile("antaeus-db", ".sqlite")
     // Connect to the database and create the needed tables. Drop any existing data.
@@ -66,6 +65,17 @@ fun main() {
 
     val qw = getQueueWorker()
     qw.start()
+
+    // test code
+    val payment = dal.createScheduledPayment( invoiceService.fetchAll().last().id, java.util.Date())
+
+    println( "created scheduled" + payment)
+
+    val fetchedPayment = dal.pollNextScheduledPayment()
+
+    println( "polled scheduled" + fetchedPayment)
+
+    println(fetchedPayment)
 
     // Create REST web service
     AntaeusRest(
