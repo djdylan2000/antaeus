@@ -43,7 +43,7 @@ abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTi
                 } catch (e : Exception) {
                     markFailed(message)
                 }
-                Thread.sleep(500)
+                Thread.sleep(1000)
             }
         }
     }

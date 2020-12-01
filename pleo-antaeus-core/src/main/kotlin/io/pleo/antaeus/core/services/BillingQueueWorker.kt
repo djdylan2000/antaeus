@@ -15,7 +15,6 @@ class BillingQueueWorker(
         private val billingService: BillingService) : AbstractQueueWorker<ScheduledPayment>(threadCount, pollWaitTimeSecs, executor) {
 
     override fun process(scheduledPayment: ScheduledPayment): Boolean {
-        println("processing message ${scheduledPayment.id} for invoice ${scheduledPayment.invoiceId} - attempt ${scheduledPayment.attempt} status ${scheduledPayment.status}")
         try {
             return billingService.charge(scheduledPayment.invoiceId)
         } catch (e: CustomerNotFoundException) {

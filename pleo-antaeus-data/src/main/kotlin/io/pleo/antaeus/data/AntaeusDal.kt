@@ -13,11 +13,12 @@ import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.transactions.transaction
 import org.joda.time.DateTime
 import java.util.Date
+import kotlin.random.Random
 
 class AntaeusDal(private val db: Database) {
 
     val MAX_RETRY_ATTEMPTS = 5
-    val TIMEOUT_MINS = 5
+    val TIMEOUT_MINS = 1
 
     fun fetchInvoice(id: Int): Invoice? {
         // transaction(db) runs the internal query as a new database transaction.
@@ -106,8 +107,8 @@ class AntaeusDal(private val db: Database) {
 
     fun pollNextScheduledPayment(): ScheduledPayment? {
 
-        val id: Int = transaction(db) transaction@{
-
+        var id: Int = transaction(db) transaction@{
+            addLogger(StdOutSqlLogger)
             val next = ScheduledPaymentTable
                     .selectAll()
                     .forUpdate()
@@ -117,22 +118,33 @@ class AntaeusDal(private val db: Database) {
                     ?.toScheduledPayment()
                     ?: return@transaction null
 
+            println("next id is " + next.id)
+
             ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(next.id) }) {
                 with(SqlExpressionBuilder) {
                     it.update(attempt, attempt + 1)
                     it[lastStartedAt] = DateTime()
                 }
             }
+
+            return@transaction next.id
         }
                 ?: return null
 
+        println("next fetched id is " + id)
         return fetchScheduledPayment(id)
+    }
+
+    fun selectAll(): List<ScheduledPayment> {
+        return transaction {
+            ScheduledPaymentTable.selectAll()
+                    .map { it.toScheduledPayment() }
+        }
     }
 
     fun markScheduledPaymentSuccess(id: Int) {
 
         transaction {
-
             // updating scheduled payment status and invoice status should be atomic
 
             ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(id) }) {
@@ -147,7 +159,6 @@ class AntaeusDal(private val db: Database) {
     }
 
     fun markScheduledFailed(id: Int) {
-
         transaction {
 
             ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(id) }) {

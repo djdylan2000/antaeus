@@ -21,7 +21,7 @@ import kotlin.random.Random
 
 // This will create all schemas and setup initial data
 internal fun setupInitialData(dal: AntaeusDal) {
-    val customers = (1..100).mapNotNull {
+    val customers = (1..5).mapNotNull {
         dal.createCustomer(
                 currency = Currency.values()[Random.nextInt(0, Currency.values().size)]
         )
@@ -42,6 +42,7 @@ internal fun setupInitialData(dal: AntaeusDal) {
             if (invoice?.status == InvoiceStatus.PENDING) {
                 val scheduledDate = Date(System.currentTimeMillis() + 15000L + java.util.Random().nextInt(10_000))
                 dal.createScheduledPayment(invoice!!.id, scheduledDate)
+                println(dal.selectAll())
             }
         }
     }
