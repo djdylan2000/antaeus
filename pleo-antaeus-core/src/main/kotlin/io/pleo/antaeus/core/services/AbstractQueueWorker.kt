@@ -30,7 +30,6 @@ abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTi
 
                 if (message == null) {
                     Thread.sleep(pollWaitTimeSecs * 1000L)
-                    println("nothing to process. Sleeping")
                     continue
                 }
 

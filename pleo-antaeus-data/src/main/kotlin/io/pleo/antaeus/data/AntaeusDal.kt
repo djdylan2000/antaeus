@@ -18,7 +18,7 @@ import kotlin.random.Random
 class AntaeusDal(private val db: Database) {
 
     val MAX_RETRY_ATTEMPTS = 5
-    val TIMEOUT_MINS = 1
+    val TIMEOUT_MINS = 2
 
     fun fetchInvoice(id: Int): Invoice? {
         // transaction(db) runs the internal query as a new database transaction.
@@ -108,17 +108,14 @@ class AntaeusDal(private val db: Database) {
     fun pollNextScheduledPayment(): ScheduledPayment? {
 
         var id: Int = transaction(db) transaction@{
-            addLogger(StdOutSqlLogger)
             val next = ScheduledPaymentTable
                     .selectAll()
                     .forUpdate()
-                    .andWhere { (ScheduledPaymentTable.scheduledTime.less(CurrentDateTime()) and (ScheduledPaymentTable.status neq ScheduledPaymentStatus.SUCCESS.toString())) }
+                    .andWhere { (ScheduledPaymentTable.scheduledTime.less(DateTime()) and (ScheduledPaymentTable.status neq ScheduledPaymentStatus.SUCCESS.toString())) }
                     .andWhere { ScheduledPaymentTable.lastStartedAt.isNull() or (ScheduledPaymentTable.attempt less MAX_RETRY_ATTEMPTS and (ScheduledPaymentTable.lastStartedAt.less(DateTime().minusMinutes(TIMEOUT_MINS))))}
                     .firstOrNull()
                     ?.toScheduledPayment()
                     ?: return@transaction null
-
-            println("next id is " + next.id)
 
             ScheduledPaymentTable.update({ ScheduledPaymentTable.id.eq(next.id) }) {
                 with(SqlExpressionBuilder) {
@@ -131,7 +128,6 @@ class AntaeusDal(private val db: Database) {
         }
                 ?: return null
 
-        println("next fetched id is " + id)
         return fetchScheduledPayment(id)
     }
 

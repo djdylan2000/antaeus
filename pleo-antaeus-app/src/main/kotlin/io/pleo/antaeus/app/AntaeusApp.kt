@@ -9,14 +9,12 @@ package io.pleo.antaeus.app
 
 import getBillingServiceQueueWorker
 import getPaymentProvider
-import io.pleo.antaeus.core.services.BillingService
-import io.pleo.antaeus.core.services.CustomerService
-import io.pleo.antaeus.core.services.InvoiceService
-import io.pleo.antaeus.core.services.ScheduledPaymentService
+import io.pleo.antaeus.core.services.*
 import io.pleo.antaeus.data.AntaeusDal
 import io.pleo.antaeus.data.CustomerTable
 import io.pleo.antaeus.data.InvoiceTable
 import io.pleo.antaeus.data.ScheduledPaymentTable
+import io.pleo.antaeus.models.InvoiceStatus
 import io.pleo.antaeus.rest.AntaeusRest
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -43,6 +41,7 @@ fun main() {
         .also {
             TransactionManager.manager.defaultIsolationLevel = Connection.TRANSACTION_SERIALIZABLE
             transaction(it) {
+                addLogger(StdOutSqlLogger)
                 // Drop all existing tables to ensure a clean slate on each run
                 SchemaUtils.drop(*tables)
                 // Create all tables
@@ -66,7 +65,16 @@ fun main() {
     // This is _your_ billing service to be included where you see fit
     val billingService = BillingService(paymentProvider = paymentProvider, invoiceService = invoiceService)
 
+    // use MockScheduledPaymentService to run and see results without waiting for the 1st of next month!
     val scheduledService = ScheduledPaymentService(dal = dal)
+
+    // schedule existing invoices from the db
+    invoiceService.fetchAll().forEach{
+        if (it.status == InvoiceStatus.PENDING) {
+            // add retry logic for a real application
+            scheduledService.schedule(it.id)
+        }
+    }
 
     val billingWorker = getBillingServiceQueueWorker(scheduledService, billingService)
 

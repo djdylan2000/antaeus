@@ -21,7 +21,7 @@ import kotlin.random.Random
 
 // This will create all schemas and setup initial data
 internal fun setupInitialData(dal: AntaeusDal) {
-    val customers = (1..5).mapNotNull {
+    val customers = (1..100).mapNotNull {
         dal.createCustomer(
                 currency = Currency.values()[Random.nextInt(0, Currency.values().size)]
         )
@@ -38,12 +38,6 @@ internal fun setupInitialData(dal: AntaeusDal) {
                     status = if (it == 1) InvoiceStatus.PENDING else InvoiceStatus.PAID
             )
 
-            // schedule for near future to test
-            if (invoice?.status == InvoiceStatus.PENDING) {
-                val scheduledDate = Date(System.currentTimeMillis() + 15000L + java.util.Random().nextInt(10_000))
-                dal.createScheduledPayment(invoice!!.id, scheduledDate)
-                println(dal.selectAll())
-            }
         }
     }
 
@@ -61,5 +55,5 @@ internal fun getPaymentProvider(): PaymentProvider {
 // mock Queue Worker to examine behavior
 internal fun getBillingServiceQueueWorker(scheduledPaymentService: ScheduledPaymentService, billingService: BillingService): BillingQueueWorker {
     val executor = ThreadPoolExecutor(10, 10, 30, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>(), Executors.defaultThreadFactory())
-    return BillingQueueWorker(1, 5, executor, scheduledPaymentService, billingService)
+    return BillingQueueWorker(4, 5, executor, scheduledPaymentService, billingService)
 }

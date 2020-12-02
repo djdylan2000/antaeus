@@ -10,23 +10,18 @@ import java.time.temporal.TemporalAdjuster
 import java.time.temporal.TemporalAdjusters
 import java.util.*
 
-class ScheduledPaymentService(private val dal: AntaeusDal) {
-
-
-    val testing = true
+open class ScheduledPaymentService(private val dal: AntaeusDal) {
 
     fun schedule(invoiceId: Int) {
 
-        val firstDayOfNextMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfNextMonth()).atStartOfDay()
-        val scheduledDate: Date
-
-        if (testing) {
-            scheduledDate = Date(System.currentTimeMillis() + 15000L + Random().nextInt(10_000))
-        } else {
-            scheduledDate = Date.from(Instant.from(firstDayOfNextMonth.toInstant(ZoneOffset.UTC)))
-        }
+        val scheduledDate = getScheduledDate()
 
         dal.createScheduledPayment(invoiceId, scheduledDate)
+    }
+
+    open fun getScheduledDate(): Date {
+        val firstDayOfNextMonth = LocalDate.now().with(TemporalAdjusters.firstDayOfNextMonth()).atStartOfDay()
+        return Date.from(Instant.from(firstDayOfNextMonth.toInstant(ZoneOffset.UTC)))
     }
 
     fun nextPending(): ScheduledPayment? {
