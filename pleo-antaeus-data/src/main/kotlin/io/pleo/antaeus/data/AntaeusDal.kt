@@ -108,7 +108,6 @@ class AntaeusDal(private val db: Database) {
     fun pollNextScheduledPayment(): ScheduledPayment? {
 
         var id: Int = transaction(db) transaction@{
-            addLogger(StdOutSqlLogger)
             val next = ScheduledPaymentTable
                     .selectAll()
                     .forUpdate()
