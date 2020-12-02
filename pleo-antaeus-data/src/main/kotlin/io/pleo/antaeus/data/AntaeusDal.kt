@@ -108,11 +108,13 @@ class AntaeusDal(private val db: Database) {
     fun pollNextScheduledPayment(): ScheduledPayment? {
 
         var id: Int = transaction(db) transaction@{
+            addLogger(StdOutSqlLogger)
             val next = ScheduledPaymentTable
                     .selectAll()
                     .forUpdate()
                     .andWhere { (ScheduledPaymentTable.scheduledTime.less(DateTime()) and (ScheduledPaymentTable.status neq ScheduledPaymentStatus.SUCCESS.toString())) }
                     .andWhere { ScheduledPaymentTable.lastStartedAt.isNull() or (ScheduledPaymentTable.attempt less MAX_RETRY_ATTEMPTS and (ScheduledPaymentTable.lastStartedAt.less(DateTime().minusMinutes(TIMEOUT_MINS))))}
+                    .limit(1)
                     .firstOrNull()
                     ?.toScheduledPayment()
                     ?: return@transaction null
@@ -129,13 +131,6 @@ class AntaeusDal(private val db: Database) {
                 ?: return null
 
         return fetchScheduledPayment(id)
-    }
-
-    fun selectAll(): List<ScheduledPayment> {
-        return transaction {
-            ScheduledPaymentTable.selectAll()
-                    .map { it.toScheduledPayment() }
-        }
     }
 
     fun markScheduledPaymentSuccess(id: Int) {

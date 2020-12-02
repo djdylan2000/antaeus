@@ -2,6 +2,7 @@ package io.pleo.antaeus.core.services
 
 import java.util.concurrent.Executor
 
+// Provides a template to poll, process and delete messages
 abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTimeSecs: Int, val executor: Executor) {
 
     abstract fun process(message: MESSAGE): Boolean
@@ -42,7 +43,7 @@ abstract class AbstractQueueWorker<MESSAGE>(val threadCount: Int, val pollWaitTi
                 } catch (e : Exception) {
                     markFailed(message)
                 }
-                Thread.sleep(1000)
+                Thread.sleep(100)
             }
         }
     }

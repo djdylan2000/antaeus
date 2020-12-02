@@ -29,7 +29,7 @@ internal fun setupInitialData(dal: AntaeusDal) {
 
     customers.forEach { customer ->
         (1..10).forEach {
-            val invoice = dal.createInvoice(
+            dal.createInvoice(
                     amount = Money(
                             value = BigDecimal(Random.nextDouble(10.0, 500.0)),
                             currency = customer.currency
@@ -52,8 +52,8 @@ internal fun getPaymentProvider(): PaymentProvider {
     }
 }
 
-// mock Queue Worker to examine behavior
+// create a queue worker for processing scheduled payments
 internal fun getBillingServiceQueueWorker(scheduledPaymentService: ScheduledPaymentService, billingService: BillingService): BillingQueueWorker {
     val executor = ThreadPoolExecutor(10, 10, 30, TimeUnit.SECONDS, LinkedBlockingQueue<Runnable>(), Executors.defaultThreadFactory())
-    return BillingQueueWorker(4, 5, executor, scheduledPaymentService, billingService)
+    return BillingQueueWorker(threadCount = 4, pollWaitTimeSecs =  5, executor =  executor,scheduledPaymentService =  scheduledPaymentService, billingService =  billingService)
 }

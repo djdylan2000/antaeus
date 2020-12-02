@@ -13,10 +13,7 @@ import java.util.*
 open class ScheduledPaymentService(private val dal: AntaeusDal) {
 
     fun schedule(invoiceId: Int) {
-
-        val scheduledDate = getScheduledDate()
-
-        dal.createScheduledPayment(invoiceId, scheduledDate)
+        dal.createScheduledPayment(invoiceId, getScheduledDate())
     }
 
     open fun getScheduledDate(): Date {

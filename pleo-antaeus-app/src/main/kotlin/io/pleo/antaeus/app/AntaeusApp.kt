@@ -76,12 +76,13 @@ fun main() {
         }
     }
 
-    val billingWorker = getBillingServiceQueueWorker(scheduledService, billingService)
-
     // Create REST web service
     AntaeusRest(
         invoiceService = invoiceService,
         customerService = customerService
     ).run()
+
+    //This polls for scheduled payments and passes them for processing
+    val billingWorker = getBillingServiceQueueWorker(scheduledService, billingService)
     billingWorker.start()
 }

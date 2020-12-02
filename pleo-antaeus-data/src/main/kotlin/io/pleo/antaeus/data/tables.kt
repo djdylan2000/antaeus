@@ -27,4 +27,5 @@ object ScheduledPaymentTable: Table() {
     val attempt = integer("attempt")
     val status = text("status")
     val lastStartedAt = datetime("last_started_at").nullable()
+    val byStatusIndex = index("fetch_by_status", false, status)
 }
